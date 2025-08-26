@@ -1,0 +1,7 @@
+{
+  "expo": {
+    "ios": {
+      "bundleIdentifier": "com.bradnen-poyst.expo-share-intent"
+    }
+  }
+}
