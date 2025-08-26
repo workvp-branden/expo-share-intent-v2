@@ -132,6 +132,7 @@ export const withShareExtensionXcodeTarget: ConfigPlugin<Parameters> = (
           buildSettingsObj["PRODUCT_NAME"] === `"${extensionName}"`
         ) {
           buildSettingsObj["CLANG_ENABLE_MODULES"] = "YES";
+          buildSettingsObj["DEFINES_MODULE"] = "YES";
           buildSettingsObj["INFOPLIST_FILE"] = `"${infoPlistFilePath}"`;
           buildSettingsObj["CODE_SIGN_ENTITLEMENTS"] =
             `"${entitlementsFilePath}"`;
