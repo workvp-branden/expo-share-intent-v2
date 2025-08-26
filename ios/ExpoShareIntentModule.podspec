@@ -19,8 +19,9 @@ Pod::Spec.new do |s|
 
   # Swift/Objective-C compatibility
   s.pod_target_xcconfig = {
+    'SWIFT_COMPILATION_MODE' => 'wholemodule',
     'DEFINES_MODULE' => 'YES',
-    'SWIFT_COMPILATION_MODE' => 'wholemodule'
+    'OTHER_SWIFT_FLAGS' => '$(inherited) -Xcc -Wno-error=non-modular-include-in-framework-module'
   }
   
   s.source_files = "**/*.{h,m,swift}"
