@@ -107,12 +107,6 @@ export const withShareExtensionXcodeTarget: ConfigPlugin<Parameters> = (
         { target: target.uuid },
         pbxGroupKey,
       );
-      // PrivacyInfo.xcprivacy
-      pbxProject.addResourceFile(
-        getPrivacyInfoFilePath(platformProjectRoot, parameters),
-        { target: target.uuid },
-        pbxGroupKey,
-      );
     } catch (e: any) {
       if (e.message.includes("reading 'path'")) {
         console.error(e);
@@ -123,10 +117,29 @@ export const withShareExtensionXcodeTarget: ConfigPlugin<Parameters> = (
       throw e;
     }
 
+    // Handle privacy manifest separately with error resilience
+    try {
+      // PrivacyInfo.xcprivacy - add with improved error handling
+      const privacyInfoPath = getPrivacyInfoFilePath(platformProjectRoot, parameters);
+      pbxProject.addResourceFile(
+        privacyInfoPath,
+        { target: target.uuid },
+        pbxGroupKey,
+      );
+      console.log('[expo-share-intent] Successfully added privacy manifest to share extension');
+    } catch (e: any) {
+      console.warn('[expo-share-intent] Privacy manifest could not be added to Xcode project - continuing build without it');
+      console.warn('[expo-share-intent] This is not fatal and share extension will still work');
+      // Don't throw error - continue build without privacy manifest integration
+    }
+
+    // Apply comprehensive DEFINES_MODULE normalization to prevent CocoaPods conflicts
     const configurations = pbxProject.pbxXCBuildConfigurationSection();
     for (const key in configurations) {
       if (typeof configurations[key].buildSettings !== "undefined") {
         const buildSettingsObj = configurations[key].buildSettings;
+        
+        // Configure share extension target
         if (
           typeof buildSettingsObj["PRODUCT_NAME"] !== "undefined" &&
           buildSettingsObj["PRODUCT_NAME"] === `"${extensionName}"`
@@ -146,6 +159,17 @@ export const withShareExtensionXcodeTarget: ConfigPlugin<Parameters> = (
           buildSettingsObj["SWIFT_EMIT_LOC_STRINGS"] = "YES";
           buildSettingsObj["SWIFT_VERSION"] = "5.0";
           buildSettingsObj["TARGETED_DEVICE_FAMILY"] = `"1,2"`;
+        }
+        
+        // Normalize DEFINES_MODULE across all targets to prevent conflicts
+        // This ensures consistency with expo-dev-menu and other pods that set DEFINES_MODULE
+        if (buildSettingsObj["DEFINES_MODULE"]) {
+          buildSettingsObj["DEFINES_MODULE"] = "YES";
+        }
+        
+        // Normalize other module-related settings for consistency
+        if (buildSettingsObj["CLANG_ENABLE_MODULES"]) {
+          buildSettingsObj["CLANG_ENABLE_MODULES"] = "YES";
         }
       }
     }
